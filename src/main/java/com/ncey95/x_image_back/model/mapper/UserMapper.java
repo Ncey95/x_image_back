@@ -2,6 +2,7 @@ package com.ncey95.x_image_back.model.mapper;
 
 import com.ncey95.x_image_back.model.po.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>

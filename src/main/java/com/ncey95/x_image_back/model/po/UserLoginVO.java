@@ -6,17 +6,9 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-/**
- * <p>
- * 用户
- * </p>
- *
- * @author Ncey95
- * @since 2025-10-19
- */
+// 已经登录用户VO
 @Data
-@TableName("user")
-public class User implements Serializable {
+public class UserLoginVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -30,12 +22,6 @@ public class User implements Serializable {
      * 账号
      */
     private String userAccount;
-
-    /**
-     * 密码
-     */
-    private String userPassword;
-
     /**
      * 用户昵称
      */
@@ -71,11 +57,5 @@ public class User implements Serializable {
      */
     private LocalDateTime updateTime;
 
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    @TableField(value = "isDelete")
-    private Byte isDelete;
-
 }
+

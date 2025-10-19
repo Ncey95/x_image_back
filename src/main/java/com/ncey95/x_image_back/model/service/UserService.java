@@ -2,6 +2,9 @@ package com.ncey95.x_image_back.model.service;
 
 import com.ncey95.x_image_back.model.po.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.ncey95.x_image_back.model.po.UserLoginVO;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * <p>
@@ -14,4 +17,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface UserService extends IService<User> {
 
     long userRegister(String userName, String password, String checkPassword); // 用户注册
+
+    UserLoginVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
+
+    User getLoginUser(HttpServletRequest request);
 }
