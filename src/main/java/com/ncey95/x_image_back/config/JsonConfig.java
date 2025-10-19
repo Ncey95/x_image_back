@@ -10,7 +10,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 @JsonComponent
 public class JsonConfig {
 
-
+    // 配置 Jackson 序列化 Long 类型为字符串，避免精度丢失
     @Bean
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
         ObjectMapper objectMapper = builder.createXmlMapper(false).build();

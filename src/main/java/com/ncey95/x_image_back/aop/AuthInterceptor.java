@@ -26,7 +26,7 @@ public class AuthInterceptor {
 
     @Around("@annotation(authCheck)") // 环绕通知，在方法执行前后进行拦截
     public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {
-        String mustRole = authCheck.mustRole(); // 必须有某个角色
+        String mustRole = authCheck.mustRole(); // 必须有某个角色，默认值为空字符串
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes(); // 获取当前请求的属性
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest(); // 获取当前请求的请求对象
 
@@ -34,6 +34,7 @@ public class AuthInterceptor {
         UserRoleEnum mustRoleEnum = UserRoleEnum.getEnumByValue(mustRole); // 获取必须的角色枚举
 
         if (mustRoleEnum == null) {
+
             return joinPoint.proceed();
         }// 如果必须的角色枚举为空，则直接放行
 

@@ -11,13 +11,13 @@ import org.springframework.context.annotation.Configuration;
 @MapperScan("com.ncey95.x_image_back.model.mapper")
 public class MyBatisPlusConfig {
 
+    // 配置 MyBatis-Plus 插件
+    // 分页插件  数据库类型为 MySQL
 
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        // 分页插件  数据库类型为 MySQL
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
-        // 分页插件
         return interceptor;
     }
 }

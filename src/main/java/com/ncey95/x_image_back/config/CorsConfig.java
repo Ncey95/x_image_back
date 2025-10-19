@@ -18,6 +18,6 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("*");
+                .exposedHeaders("*");// 暴露所有头信息
     }
 }

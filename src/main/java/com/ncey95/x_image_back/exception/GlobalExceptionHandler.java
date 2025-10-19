@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BusinessException.class)
+    @ExceptionHandler(BusinessException.class)// 业务异常处理
     public BaseResponse<?> businessExceptionHandler(BusinessException e) {
-        log.error("BusinessException", e);
+        log.error("业务异常信息:{}", e.getMessage());
         return ResultUtils.error(e.getErrorCode(), e.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> runtimeExceptionHandler(RuntimeException e) {
-        log.error("RuntimeException",e);
+        log.error("运行时异常信息:{}",e.getMessage());
         return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
     }
 }

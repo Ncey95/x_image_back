@@ -10,14 +10,6 @@ import com.ncey95.x_image_back.model.po.UserVO;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-/**
- * <p>
- * 用户 服务类
- * </p>
- *
- * @author Ncey95
- * @since 2025-10-19
- */
 public interface UserService extends IService<User> {
 
     long userRegister(String userName, String password, String checkPassword); // 用户注册

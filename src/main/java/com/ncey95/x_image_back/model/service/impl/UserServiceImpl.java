@@ -88,8 +88,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if(userAccount.length()<5){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名长度不能小于5位");
         }
-        if(userPassword.length()<6){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码长度不能小于6位");
+        if(userPassword.length()<5){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码长度不能小于5位");
         }
 
         //2.密码加密

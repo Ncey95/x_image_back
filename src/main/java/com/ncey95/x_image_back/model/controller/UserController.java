@@ -31,7 +31,7 @@ import java.util.List;
  * @since 2025-10-19
  */
 @RestController
-@RequestMapping()
+@RequestMapping("/user")
 public class UserController {
 
     @Resource
