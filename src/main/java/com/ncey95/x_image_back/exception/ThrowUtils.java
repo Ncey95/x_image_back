@@ -8,10 +8,10 @@ public class ThrowUtils {
         }
     }
     public static void throwIf(boolean condition, ErrorCode errorCode) {
-        throwIf(condition, new Exception(errorCode));
+        throwIf(condition, new BusinessException(errorCode));
     }
 
     public static void throwIf(boolean condition, ErrorCode errorCode, String message) {
-        throwIf(condition, new Exception(errorCode, message));
+        throwIf(condition, new BusinessException(errorCode, message));
     }
 }

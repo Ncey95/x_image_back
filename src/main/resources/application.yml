@@ -36,8 +36,29 @@ knife4j:
     license-url: https://stackoverflow.com/
     terms-of-service-url: https://stackoverflow.com/
     group:
-      test1:
-        group-name: 默认分组
+      default:
+#        group-name: 默认分组
         api-rule: package
         api-rule-resources:
           - com.ncey95.x_image_back.controller
+
+mybatis-plus:
+  configuration:
+    # MyBatis 配置
+    # 开启驼峰命名映射
+    map-underscore-to-camel-case: true
+    # 开启日志输出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.ncey95.x_image_back.po
+  global-config:
+    # 全局配置
+    db-config:
+      # 数据库配置
+      id-type: auto
+      # 逻辑删除字段
+      logic-delete-field: isDeleted
+      # 逻辑删除值
+      logic-delete-value: 1
+      # 逻辑未删除值
+      logic-not-delete-value: 0

@@ -1,4 +1,4 @@
-package com.ncey95.x_image_back.controller;
+package com.ncey95.x_image_back.model.controller;
 
 import com.ncey95.x_image_back.common.BaseResponse;
 import com.ncey95.x_image_back.common.ResultUtils;
