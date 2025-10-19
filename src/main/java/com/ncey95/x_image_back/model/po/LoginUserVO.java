@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 // 已经登录用户VO
 @Data
-public class UserLoginVO implements Serializable {
+public class LoginUserVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

@@ -9,19 +9,19 @@ public class CodeGenerator {
         FastAutoGenerator.create("jdbc:mysql://localhost:3306/x_image", "root", "123456")
                 .globalConfig(builder -> {
                     builder.author("Ncey95") // 设置作者
-                            .outputDir(System.getProperty("user.dir") + "/src/main/java"); // 指定输出目录
+                            .outputDir(System.getProperty("user.dir") + "/src/main/resources/generator"); // 指定输出目录
                 })
                 .packageConfig(builder -> {
-                    builder.parent("com.ncey95.x_image_back") // 设置父包名
+                    builder.parent("") // 设置父包名 可为空
                             .mapper("mapper")
                             .entity("po")
                             .controller("controller")
                             .service("service")
                             .serviceImpl("service.impl")
-                            .pathInfo(Collections.singletonMap(OutputFile.xml, System.getProperty("user.dir") + "/src/main/resources/mapper")); // 设置mapperXml生成路径
+                            .pathInfo(Collections.singletonMap(OutputFile.xml, System.getProperty("user.dir") + "/src/main/resources/generator/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("user") // 设置需要生成的表名
+                    builder.addInclude("user") // 设置需要生成的表名 多个表名用逗号隔开
                             .addTablePrefix(""); // 设置过滤表前缀
                 })
                 .execute();

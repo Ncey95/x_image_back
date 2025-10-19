@@ -1,23 +1,30 @@
 package com.ncey95.x_image_back.model.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ncey95.x_image_back.constant.UserConstant;
 import com.ncey95.x_image_back.exception.BusinessException;
 import com.ncey95.x_image_back.exception.ErrorCode;
+import com.ncey95.x_image_back.model.dto.user.UserQueryRequest;
 import com.ncey95.x_image_back.model.enums.UserRoleEnum;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.mapper.UserMapper;
-import com.ncey95.x_image_back.model.po.UserLoginVO;
+import com.ncey95.x_image_back.model.po.LoginUserVO;
+import com.ncey95.x_image_back.model.po.UserVO;
 import com.ncey95.x_image_back.model.service.UserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -73,17 +80,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     // 用户登录
     @Override
-    public UserLoginVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         //1.检验参数
-        /*if(StrUtil.hasEmpty(userAccount, userPassword)){
+        if(StrUtil.hasEmpty(userAccount, userPassword)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"参数不能为空");
         }
-        if(userAccount.length()<6){
+        if(userAccount.length()<5){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"用户名长度不能小于5位");
         }
-        if(userPassword.length()<7){
+        if(userPassword.length()<6){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码长度不能小于6位");
-        }*/
+        }
 
         //2.密码加密
         String encryptPassword = getEncryptPassword(userPassword);
@@ -119,16 +126,78 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return currentUser;
     }
 
-    private UserLoginVO getUserLoginVO(User user) {
-        UserLoginVO userLoginVO = new UserLoginVO();
-        BeanUtil.copyProperties(user, userLoginVO);
-        return userLoginVO;
+    @Override // 获取登录用户VO
+    public LoginUserVO getLoginUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtil.copyProperties(user, loginUserVO);
+        return loginUserVO;
+    }
+    @Override // 用户退出登录
+    public boolean userLogout(HttpServletRequest request) {
+
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);// 从会话中获取用户登录状态
+        if (userObj == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
+
+        request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
+        return true;
     }
 
+    // user转换为LoginUserVO
+    private LoginUserVO getUserLoginVO(User user) {
+        LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtil.copyProperties(user, loginUserVO);
+        return loginUserVO;
+    }
 
+    @Override // user转换为UserVO
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    @Override // userList转换为UserVOList 获取脱敏后的数据列表
+    public List<UserVO> getUserVOList(List<User> userList) {
+        if (CollUtil.isEmpty(userList)) {
+            return new ArrayList<>();
+        }
+        return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    // 密码加密 加盐处理  md5 加密
+    @Override
     public String getEncryptPassword(String password){
-        // 密码加密 加盐处理
         final String SALT = "xxxxx";
         return DigestUtils.md5DigestAsHex((SALT + password).getBytes());
+    }
+
+    @Override // 获取查询包装器
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        Long id = userQueryRequest.getId();
+        String userAccount = userQueryRequest.getUserAccount();
+        String userName = userQueryRequest.getUserName();
+        String userProfile = userQueryRequest.getUserProfile();
+        String userRole = userQueryRequest.getUserRole();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(ObjUtil.isNotNull(id), "id", id);
+        queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+        queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+        queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+        queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        return queryWrapper;
     }
 }
