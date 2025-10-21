@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ncey95.x_image_back.model.dto.user.UserQueryRequest;
 import com.ncey95.x_image_back.model.po.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.ncey95.x_image_back.model.po.LoginUserVO;
-import com.ncey95.x_image_back.model.po.UserVO;
+import com.ncey95.x_image_back.model.vo.LoginUserVO;
+import com.ncey95.x_image_back.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;

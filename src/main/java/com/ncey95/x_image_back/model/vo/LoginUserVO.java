@@ -1,4 +1,4 @@
-package com.ncey95.x_image_back.model.po;
+package com.ncey95.x_image_back.model.vo;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
