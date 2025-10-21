@@ -33,7 +33,6 @@ public class FileController {
 
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @PostMapping("/test/upload")
-
     public BaseResponse<String> testUploadFile(@RequestPart("file") MultipartFile multipartFile) {
 
         String filename = multipartFile.getOriginalFilename();

@@ -32,10 +32,10 @@ public class CosClientConfig {
     @Bean
     public COSClient cosClient() {
 
-        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
+        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey); // 初始化用户身份信息（secretId, secretKey）
 
-        ClientConfig clientConfig = new ClientConfig(new Region(region));
+        ClientConfig clientConfig = new ClientConfig(new Region(region)); // 初始化客户端配置（区域）
 
-        return new COSClient(cred, clientConfig);
+        return new COSClient(cred, clientConfig);// 初始化COS客户端
     }
 }

@@ -21,7 +21,7 @@ public class CodeGenerator {
                             .pathInfo(Collections.singletonMap(OutputFile.xml, System.getProperty("user.dir") + "/src/main/resources/generator/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("user") // 设置需要生成的表名 多个表名用逗号隔开
+                    builder.addInclude("picture") // 设置需要生成的表名 多个表名用逗号隔开
                             .addTablePrefix(""); // 设置过滤表前缀
                 })
                 .execute();
