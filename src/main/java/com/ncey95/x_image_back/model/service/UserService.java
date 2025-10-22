@@ -33,4 +33,7 @@ public interface UserService extends IService<User> {
 
     // 获取查询包装器
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    boolean isAdmin(User user);
 }
+
