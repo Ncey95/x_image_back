@@ -10,16 +10,15 @@ import com.ncey95.x_image_back.exception.BusinessException;
 import com.ncey95.x_image_back.exception.ErrorCode;
 import com.ncey95.x_image_back.exception.ThrowUtils;
 import com.ncey95.x_image_back.model.dto.DeleteRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureEditRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureQueryRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureUpdateRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureUploadRequest;
+import com.ncey95.x_image_back.model.dto.picture.*;
+import com.ncey95.x_image_back.model.enums.PictureReviewStatusEnum;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.service.IPictureService;
 import com.ncey95.x_image_back.model.service.UserService;
 import com.ncey95.x_image_back.model.vo.PictureTagCategory;
 import com.ncey95.x_image_back.model.vo.PictureVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Controller;
@@ -39,7 +38,8 @@ import java.util.List;
  * @author Ncey95
  * @since 2025-10-21
  */
-@Controller
+@Slf4j
+@RestController //这是一个Restful风格的控制器  Controller 处理HTTP请求并返回JSON格式的响应
 @RequestMapping("/picture")
 public class PictureController {
 
@@ -50,7 +50,7 @@ public class PictureController {
     private IPictureService pictureService;
 
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(
             @RequestPart("file") MultipartFile multipartFile,
             PictureUploadRequest pictureUploadRequest,
@@ -58,6 +58,18 @@ public class PictureController {
 
         User loginUser = userService.getLoginUser(request);
         PictureVO pictureVO = pictureService.uploadPicture(multipartFile, pictureUploadRequest, loginUser);
+        log.info("上传到数据库了");
+        return ResultUtils.success(pictureVO);
+    }
+
+    // 上传图片通过url
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(
+            @RequestBody PictureUploadRequest pictureUploadRequest,
+            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
         return ResultUtils.success(pictureVO);
     }
 
@@ -83,10 +95,10 @@ public class PictureController {
         return ResultUtils.success(true);
     }
 
-
+    // 更新图片
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest ,HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -103,10 +115,16 @@ public class PictureController {
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
 
+        //补充审核参数
+        User loginUser = userService.getLoginUser(request);// 获取用户
+        pictureService.fillReviewParams(picture, loginUser);
+
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
     }
+
+
 
 
     @GetMapping("/get")
@@ -152,6 +170,9 @@ public class PictureController {
 
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
 
+        //设置只展示审核通过的图片 默认用户智能看到审核通过的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));
 
@@ -175,6 +196,9 @@ public class PictureController {
         pictureService.validPicture(picture);
         User loginUser = userService.getLoginUser(request);
 
+        //补充审核参数
+        pictureService.fillReviewParams(picture, loginUser);
+
         long id = pictureEditRequest.getId();
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
@@ -196,6 +220,17 @@ public class PictureController {
         pictureTagCategory.setTagList(tagList);
         pictureTagCategory.setCategoryList(categoryList);
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    //审核图片 管理员专用
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                                 HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request); //获取当前登录用户
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
     }
 
 }

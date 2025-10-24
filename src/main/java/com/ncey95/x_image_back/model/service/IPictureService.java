@@ -3,6 +3,7 @@ package com.ncey95.x_image_back.model.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ncey95.x_image_back.model.dto.picture.PictureQueryRequest;
+import com.ncey95.x_image_back.model.dto.picture.PictureReviewRequest;
 import com.ncey95.x_image_back.model.dto.picture.PictureUploadRequest;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -22,7 +23,8 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface IPictureService extends IService<Picture> {
 
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    // inputSource 输入源 可以是 MultipartFile 或 String的url 类型
+    PictureVO uploadPicture(Object inputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 
@@ -42,4 +44,10 @@ public interface IPictureService extends IService<Picture> {
 
     //编写图片数据校验方法，用于更新和修改图片时进行判断：
     void validPicture(Picture picture);
+
+    //图片审核
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    //填充审核参数
+    void fillReviewParams(Picture picture, User loginUser);
 }
