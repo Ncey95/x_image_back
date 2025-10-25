@@ -1,5 +1,6 @@
 package com.ncey95.x_image_back.model.controller;
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ncey95.x_image_back.annotation.AuthCheck;
@@ -12,6 +13,7 @@ import com.ncey95.x_image_back.exception.ThrowUtils;
 import com.ncey95.x_image_back.model.dto.DeleteRequest;
 import com.ncey95.x_image_back.model.dto.picture.*;
 import com.ncey95.x_image_back.model.enums.PictureReviewStatusEnum;
+import com.ncey95.x_image_back.model.mapper.PictureMapper;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.service.IPictureService;
@@ -20,6 +22,9 @@ import com.ncey95.x_image_back.model.vo.PictureTagCategory;
 import com.ncey95.x_image_back.model.vo.PictureVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -48,6 +54,10 @@ public class PictureController {
 
     @Resource
     private IPictureService pictureService;
+
+    //引入redis模板 用于缓存图片标签分类
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping("/upload")
     //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
@@ -125,8 +135,6 @@ public class PictureController {
     }
 
 
-
-
     @GetMapping("/get")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Picture> getPictureById(long id, HttpServletRequest request) {
@@ -149,7 +157,7 @@ public class PictureController {
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
     }
 
-
+    // 分页获取图片 管理员使用的接口
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Picture>> listPictureByPage(@RequestBody PictureQueryRequest pictureQueryRequest) {
@@ -161,7 +169,7 @@ public class PictureController {
         return ResultUtils.success(picturePage);
     }
 
-
+    // 分页获取图片封装VO 包含用户信息 用户使用的接口 获取图片列表
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest,
                                                              HttpServletRequest request) {
@@ -178,6 +186,49 @@ public class PictureController {
 
         return ResultUtils.success(pictureService.getPictureVOPage(picturePage, request));
     }
+
+    @PostMapping("/list/page/vo/cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithCache(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                                      HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        // 限制爬虫 每次最多只能请求20条数据
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 设置只展示审核通过的图片 默认用户只能看到审核通过的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
+        // 查询缓存 缓存中没有 则查询数据库 并将结果缓存起来
+
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest); //将查询条件转换为json字符串
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes()); //转md5 字符串
+        String redisKey = "picture:listPictureVOByPage:" + hashKey; // 构建缓存的key
+        // 操作Redis 从缓存中获取数据
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        // 拿到缓存中的值
+        String cachedValue = valueOps.get(redisKey);
+        if (cachedValue != null) {
+            // 缓存中存在数据 则直接返回缓存中的数据
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class); // Json转换为Page对象
+            log.info("使用缓存数据: {}", cachedValue);
+            return ResultUtils.success(cachedPage);
+        }
+
+        //查询数据库 分页获取图片封装VO 包含用户信息 用户使用的接口 获取图片列表
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
+                pictureService.getQueryWrapper(pictureQueryRequest));
+        // 数据库中存在数据 则将数据缓存起来
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+
+        // 将查询结果转换为Json字符串 并设置缓存过期时间
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage); // 将Page对象转换为Json字符串
+        // 随机过期时间 300-600秒 防止缓存雪崩
+        int cacheExpireTime = 300 +  RandomUtil.randomInt(0, 300);
+        //redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS分别是缓存的key, 缓存的值, 缓存过期时间, 时间单位
+        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        return ResultUtils.success(pictureVOPage);
+    }
+
 
 
     @PostMapping("/edit")

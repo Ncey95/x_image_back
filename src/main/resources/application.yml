@@ -14,6 +14,12 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
+  redis:
+    host: localhost
+    port: 6379
+    password: 123456
+    database: 0
+    timeout: 5000ms
 
 #mybatis:
 #  configuration:
