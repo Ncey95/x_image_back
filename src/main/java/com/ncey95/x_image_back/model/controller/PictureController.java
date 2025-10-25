@@ -233,4 +233,19 @@ public class PictureController {
         return ResultUtils.success(true);
     }
 
+    // 批量抓取图片通过url
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(
+            @RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            HttpServletRequest request) {
+        // 如果请求体为空 抛出参数错误异常
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        // 从请求中获取登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务层方法 批量抓取图片 通过url
+        int uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
+    }
+
 }

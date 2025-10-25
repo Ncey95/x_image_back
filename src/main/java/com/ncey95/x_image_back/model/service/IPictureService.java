@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ncey95.x_image_back.model.dto.picture.PictureQueryRequest;
 import com.ncey95.x_image_back.model.dto.picture.PictureReviewRequest;
+import com.ncey95.x_image_back.model.dto.picture.PictureUploadByBatchRequest;
 import com.ncey95.x_image_back.model.dto.picture.PictureUploadRequest;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.vo.PictureVO;
+import io.swagger.models.auth.In;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,4 +52,7 @@ public interface IPictureService extends IService<Picture> {
 
     //填充审核参数
     void fillReviewParams(Picture picture, User loginUser);
+
+    // 批量上传图片通过url
+    Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
 }
