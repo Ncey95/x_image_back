@@ -3,6 +3,8 @@ package com.ncey95.x_image_back.model.controller;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.ncey95.x_image_back.annotation.AuthCheck;
 import com.ncey95.x_image_back.common.BaseResponse;
 import com.ncey95.x_image_back.common.ResultUtils;
@@ -58,6 +60,15 @@ public class PictureController {
     //引入redis模板 用于缓存图片标签分类
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    // 引入caffeine本地缓存
+    private final Cache<String, String> LOCAL_CACHE =
+            Caffeine.newBuilder()
+                    .initialCapacity(1024)
+                    .maximumSize(10000L)
+                    // 缓存过期时间 5分钟
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
 
     @PostMapping("/upload")
     //@AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
@@ -225,6 +236,49 @@ public class PictureController {
         int cacheExpireTime = 300 +  RandomUtil.randomInt(0, 300);
         //redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS分别是缓存的key, 缓存的值, 缓存过期时间, 时间单位
         valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        return ResultUtils.success(pictureVOPage);
+    }
+
+    @PostMapping("/list/page/vo/local_cache")
+    public BaseResponse<Page<PictureVO>> listPictureVOByPageWithLocalCache(@RequestBody PictureQueryRequest pictureQueryRequest,
+                                                                      HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        // 限制爬虫 每次最多只能请求20条数据
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 设置只展示审核通过的图片 默认用户只能看到审核通过的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
+        // 查询缓存 缓存中没有 则查询数据库 并将结果缓存起来
+
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest); //将查询条件转换为json字符串
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes()); //转md5 字符串
+        String cacheKey = "listPictureVOByPage:" + hashKey; // 构建本地缓存的key
+
+        // 拿到缓存中的值
+        String cachedValue = LOCAL_CACHE.getIfPresent(cacheKey);
+        if (cachedValue != null) {
+            // 缓存中存在数据 则直接返回缓存中的数据
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class); // Json转换为Page对象
+            log.info("使用缓存数据: {}", cachedValue);
+            return ResultUtils.success(cachedPage);
+        }
+
+        //查询数据库 分页获取图片封装VO 包含用户信息 用户使用的接口 获取图片列表
+        Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
+                pictureService.getQueryWrapper(pictureQueryRequest));
+        // 数据库中存在数据 则将数据缓存起来
+        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
+
+        // 将查询结果转换为Json字符串 并设置缓存过期时间
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage); // 将Page对象转换为Json字符串
+        // 随机过期时间 300-600秒 防止缓存雪崩
+        //int cacheExpireTime = 300 +  RandomUtil.randomInt(0, 300);
+        //redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS分别是缓存的key, 缓存的值, 缓存过期时间, 时间单位
+        //valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+        // 本地缓存也添加数据
+        LOCAL_CACHE.put(cacheKey, cacheValue);
 
         return ResultUtils.success(pictureVOPage);
     }
