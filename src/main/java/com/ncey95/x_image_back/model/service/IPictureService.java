@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.vo.PictureVO;
 import io.swagger.models.auth.In;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -55,4 +56,8 @@ public interface IPictureService extends IService<Picture> {
 
     // 批量上传图片通过url
     Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
+
+    // 异步清除图片文件
+    @Async
+    void clearPictureFile(Picture oldPicture);
 }

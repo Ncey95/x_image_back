@@ -38,6 +38,7 @@ public abstract class PictureUploadTemplate {
         // 2.图片上传地址
         String uuid = RandomUtil.randomString(16);
         String originFilename = getOriginFilename(inputSource);
+        // 3. 上传文件名 包含日期 随机字符串 后缀 uuid生成的是随机字符串 用于防止文件名冲突 例如 20251021_123456.jpg
         String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid,
                 FileUtil.getSuffix(originFilename));
         String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFilename);
@@ -50,7 +51,7 @@ public abstract class PictureUploadTemplate {
             processFile(inputSource, file);
             // 4.上传文件到 cos 存储桶
             PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
-            // 获取图片信息对象 返回构造好的图片上传结果对象 使用buildResult方法
+            // 获取图片信息对象 返回构造好的图片上传结果对象
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
 
             // 获取到图片处理结果
@@ -61,9 +62,15 @@ public abstract class PictureUploadTemplate {
             List<CIObject> objectList = processResults.getObjectList();
             // 如果 压缩后的结果 不为空 则返回压缩后的结果
             if (CollUtil.isNotEmpty(objectList)) {
-                CIObject compressedCiObject = objectList.get(0); // 压缩后的结果
+                CIObject compressedCiObject = objectList.get(0); // 压缩后的图片
+                CIObject thumbnailCiObject = compressedCiObject; // 缩略图默认是压缩后的图片
+                // 有生成缩略图 才生成
+                if (objectList.size() > 1) {
+                    thumbnailCiObject = objectList.get(1); // 缩略图结果
+                }
+
                 // 返回压缩后的图片结果
-                return buildResult(originFilename, compressedCiObject);
+                return buildResult(originFilename, compressedCiObject,thumbnailCiObject);
             }
 
             return buildResult(originFilename, file, uploadPath, imageInfo);
@@ -101,8 +108,8 @@ public abstract class PictureUploadTemplate {
         return uploadPictureResult;
     }
 
-    // 封装返回结果 压缩后的图片结果 compressedCiObject是压缩后的图片信息对象
-    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject) {
+    // 封装返回结果 压缩后的图片结果 compressedCiObject是压缩后的图片信息对象 thumbnailCiObject是缩略图信息对象
+    private UploadPictureResult buildResult(String originFilename, CIObject compressedCiObject, CIObject thumbnailCiObject) {
         UploadPictureResult uploadPictureResult = new UploadPictureResult(); // 压缩后的图片上传结果对象
         int picWidth = compressedCiObject.getWidth(); // 压缩后的图片宽度
         int picHeight = compressedCiObject.getHeight(); // 压缩后的图片高度
@@ -114,7 +121,11 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicFormat(compressedCiObject.getFormat());
         uploadPictureResult.setPicSize(compressedCiObject.getSize().longValue());
 
+        // 压缩后的图片地址
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + compressedCiObject.getKey()); // 压缩后的图片上传地址
+
+        // 缩略图地址
+        uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailCiObject.getKey());
         return uploadPictureResult;
     }
 

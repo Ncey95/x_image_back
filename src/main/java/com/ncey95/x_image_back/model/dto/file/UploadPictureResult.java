@@ -8,6 +8,8 @@ public class UploadPictureResult {
 
     private String url;
 
+    private String thumbnailUrl; // 缩略图url
+
 
     private String picName;
 
