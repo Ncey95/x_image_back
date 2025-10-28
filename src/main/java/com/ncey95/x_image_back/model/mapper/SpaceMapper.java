@@ -1,16 +1,16 @@
 package com.ncey95.x_image_back.model.mapper;
 
-import com.ncey95.x_image_back.model.po.User;
+import com.ncey95.x_image_back.model.po.Space;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
  * <p>
- * 用户 Mapper 接口
+ * 空间 Mapper 接口
  * </p>
  *
  * @author Ncey95
- * @since 2025-10-19
+ * @since 2025-10-28
  */
-public interface UserMapper extends BaseMapper<User> {
+public interface SpaceMapper extends BaseMapper<Space> {
 
 }

@@ -2,6 +2,8 @@ package com.ncey95.x_image_back;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.config.OutputFile;
+import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
+
 import java.util.Collections;
 
 public class CodeGenerator {
@@ -21,8 +23,13 @@ public class CodeGenerator {
                             .pathInfo(Collections.singletonMap(OutputFile.xml, System.getProperty("user.dir") + "/src/main/resources/generator/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("picture") // 设置需要生成的表名 多个表名用逗号隔开
-                            .addTablePrefix(""); // 设置过滤表前缀
+                    builder.addInclude("space") // 设置需要生成的表名 多个表名用逗号隔开
+                            .entityBuilder()
+                            .enableLombok()
+                            .enableTableFieldAnnotation() // 启用字段注解
+                            .controllerBuilder()
+                            .enableRestStyle(); // 启用 REST 风格
+                             // 设置过滤表前缀
                 })
                 .execute();
     }

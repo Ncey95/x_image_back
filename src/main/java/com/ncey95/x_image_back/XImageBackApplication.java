@@ -5,8 +5,10 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableAsync
 //@MapperScan("com.ncey95.x_image_back.model.mapper")
 @SpringBootApplication
 @EnableAspectJAutoProxy(exposeProxy = true)// 开启AOP代理，暴露代理对象，用于在切面中获取代理对象
