@@ -26,6 +26,12 @@ public class Picture implements Serializable {
 
     private String thumbnailUrl; // 缩略图url
 
+    private String picColor; // 图片主色调
+
+
+     // 空间id
+    private Long spaceId;
+
     private String name; //图片名字
 
     // 图片的介绍

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import lombok.Data;
 import lombok.Getter;
@@ -81,7 +82,7 @@ public class Space implements Serializable {
      * 编辑时间
      */
     @TableField("editTime")
-    private LocalDateTime editTime;
+    private Date editTime;
 
     /**
      * 更新时间

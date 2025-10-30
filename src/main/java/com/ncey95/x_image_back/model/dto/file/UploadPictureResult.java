@@ -10,6 +10,9 @@ public class UploadPictureResult {
 
     private String thumbnailUrl; // 缩略图url
 
+    private String picColor; // 图片主色调
+
+
 
     private String picName;
 

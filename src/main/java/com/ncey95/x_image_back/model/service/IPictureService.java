@@ -2,10 +2,7 @@ package com.ncey95.x_image_back.model.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ncey95.x_image_back.model.dto.picture.PictureQueryRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureReviewRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureUploadByBatchRequest;
-import com.ncey95.x_image_back.model.dto.picture.PictureUploadRequest;
+import com.ncey95.x_image_back.model.dto.picture.*;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ncey95.x_image_back.model.po.User;
@@ -60,4 +57,11 @@ public interface IPictureService extends IService<Picture> {
     // 异步清除图片文件
     @Async
     void clearPictureFile(Picture oldPicture);
+
+    void checkPictureAuth(User loginUser, Picture picture);
+
+    void deletePicture(long pictureId, User loginUser);
+
+    // 更新图片
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 }
