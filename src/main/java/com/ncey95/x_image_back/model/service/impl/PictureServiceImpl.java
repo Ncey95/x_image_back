@@ -27,6 +27,7 @@ import com.ncey95.x_image_back.model.service.ISpaceService;
 import com.ncey95.x_image_back.model.service.UserService;
 import com.ncey95.x_image_back.model.vo.PictureVO;
 import com.ncey95.x_image_back.model.vo.UserVO;
+import com.ncey95.x_image_back.utils.ColorSimilarUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -35,16 +36,16 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -175,6 +176,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setPicHeight(uploadPictureResult.getPicHeight());
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
+        // 图片主色调
+        picture.setPicColor(uploadPictureResult.getPicColor());
+
         picture.setUserId(loginUser.getId());
 
 
@@ -490,7 +494,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         Long spaceId = picture.getSpaceId();
         if (spaceId == null) {
             // 公共图库仅 本人或管理员可以操作
-            if (!picture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            if (!picture.getUserId().equals(loginUser.getId()) && userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
         } else {
@@ -556,6 +560,153 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
         boolean result = this.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    // 按颜色搜索图片
+    /**
+     * 根据颜色搜索图片
+     * 根据指定的空间ID和目标颜色，搜索该空间内颜色相似的图片并按相似度排序
+     * @param spaceId 空间ID
+     * @param picColor 目标颜色（十六进制格式，如：#FF0000 或 0xFF0000）
+     * @param loginUser 登录用户信息
+     * @return 按颜色相似度排序的图片VO列表，最多返回12张图片
+     * @throws BusinessException 当参数错误、无权限或空间不存在时抛出
+     */
+    @Override
+    public List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser) {
+        // 参数校验：空间ID和颜色不能为空
+        ThrowUtils.throwIf(spaceId == null || StrUtil.isBlank(picColor), ErrorCode.PARAMS_ERROR);
+        // 权限校验：登录用户不能为空
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+
+        // 查询空间信息，验证空间是否存在
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        // 权限校验：确保当前用户是空间的所有者
+        if (!loginUser.getId().equals(space.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间访问权限");
+        }
+
+        // 查询指定空间内所有有颜色信息的图片
+        List<Picture> pictureList = this.lambdaQuery()
+                .eq(Picture::getSpaceId, spaceId) // 条件：空间ID匹配
+                .isNotNull(Picture::getPicColor) // 条件：图片颜色信息不为空
+                .list();
+
+        // 如果没有找到图片，返回空列表
+        if (CollUtil.isEmpty(pictureList)) {
+            return Collections.emptyList();
+        }
+
+        // 将十六进制颜色字符串转换为Color对象
+        Color targetColor = Color.decode(picColor);
+
+        // 对图片列表按颜色相似度进行排序，并限制返回最多12张图片
+        List<Picture> sortedPictures = pictureList.stream()
+                .sorted(Comparator.comparingDouble(picture -> {
+                    // 获取图片的十六进制颜色
+                    String hexColor = picture.getPicColor();
+
+                    // 对于没有颜色信息的图片，将其相似度设为最低（排到最后）
+                    if (StrUtil.isBlank(hexColor)) {
+                        return Double.MAX_VALUE;
+                    }
+                    // 将图片的十六进制颜色转换为Color对象
+                    Color pictureColor = Color.decode(hexColor);
+
+                    // 计算图片颜色与目标颜色的相似度，并取负值进行降序排序（相似度高的排前面）
+                    // 使用负号是因为默认是升序排序，负号使其变为降序
+                    return -ColorSimilarUtils.calculateSimilarity(targetColor, pictureColor);
+                }))
+                // 限制返回最多12张图片
+                .limit(12)
+                // 收集排序后的结果
+                .collect(Collectors.toList());
+
+        // 将排序后的Picture实体列表转换为PictureVO列表并返回
+        return sortedPictures.stream()
+                .map(PictureVO::objToVo)
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * 批量编辑图片信息
+     * 支持批量更新图片的分类和标签信息，操作在事务中进行，确保数据一致性
+     * @param pictureEditByBatchRequest 批量编辑请求对象，包含图片ID列表、空间ID、分类和标签信息
+     * @param loginUser 登录用户信息
+     * @throws BusinessException 当参数错误、无权限、空间不存在或操作失败时抛出
+     */
+    @Transactional(rollbackFor = Exception.class) // 事务注解，遇到任何异常时回滚
+    @Override
+    public void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser) {
+        // 从请求对象中提取参数
+        List<Long> pictureIdList = pictureEditByBatchRequest.getPictureIdList(); // 需要编辑的图片ID列表
+        Long spaceId = pictureEditByBatchRequest.getSpaceId(); // 空间ID
+        String category = pictureEditByBatchRequest.getCategory(); // 要更新的分类（可为空）
+        List<String> tags = pictureEditByBatchRequest.getTags(); // 要更新的标签列表（可为空）
+
+        // 参数校验：空间ID和图片ID列表不能为空
+        ThrowUtils.throwIf(spaceId == null || CollUtil.isEmpty(pictureIdList), ErrorCode.PARAMS_ERROR);
+        // 权限校验：登录用户不能为空
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
+
+        // 查询空间信息，验证空间是否存在
+        Space space = spaceService.getById(spaceId);
+        ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
+        // 权限校验：确保当前用户是空间的所有者
+        if (!loginUser.getId().equals(space.getUserId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间访问权限");
+        }
+
+        // 查询指定空间中、指定ID列表的图片（仅查询必要的ID和空间ID字段）
+        List<Picture> pictureList = this.lambdaQuery()
+                .select(Picture::getId, Picture::getSpaceId) // 只查询必要字段，提高性能
+                .eq(Picture::getSpaceId, spaceId) // 条件：空间ID匹配
+                .in(Picture::getId, pictureIdList) // 条件：图片ID在指定列表中
+                .list();
+
+        // 如果没有找到符合条件的图片，直接返回
+        if (pictureList.isEmpty()) {
+            return;
+        }
+
+        // 遍历图片列表，更新分类和标签信息（仅当请求中提供了相应信息时才更新）
+        pictureList.forEach(picture -> {
+            // 如果提供了分类信息，则更新图片分类
+            if (StrUtil.isNotBlank(category)) {
+                picture.setCategory(category);
+            }
+            // 如果提供了标签列表，则更新图片标签（将标签列表转换为JSON字符串）
+            if (CollUtil.isNotEmpty(tags)) {
+                picture.setTags(JSONUtil.toJsonStr(tags));
+            }
+        });
+        // 批量重命名
+        String nameRule = pictureEditByBatchRequest.getNameRule();
+        fillPictureWithNameRule(pictureList, nameRule);
+
+        // 批量更新图片信息
+        boolean result = this.updateBatchById(pictureList);
+        // 如果更新失败，抛出操作错误异常
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    // 批量重命名图片 私有方法
+    private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
+        if (CollUtil.isEmpty(pictureList) || StrUtil.isBlank(nameRule)) {
+            return;
+        }
+        long count = 1;
+        try {
+            for (Picture picture : pictureList) {
+                String pictureName = nameRule.replaceAll("\\{序号}", String.valueOf(count++));
+                picture.setName(pictureName);
+            }
+        } catch (Exception e) {
+            log.error("名称解析错误", e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
+        }
     }
 
 }

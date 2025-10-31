@@ -9,9 +9,11 @@ import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.vo.PictureVO;
 import io.swagger.models.auth.In;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * <p>
@@ -64,4 +66,10 @@ public interface IPictureService extends IService<Picture> {
 
     // 更新图片
     void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    // 按颜色搜索图片
+    List<PictureVO> searchPictureByColor(Long spaceId, String picColor, User loginUser);
+
+    @Transactional(rollbackFor = Exception.class)
+    void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
 }

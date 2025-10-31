@@ -125,6 +125,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space> implements
         }
     }
 
+    // 校验空间是否存在
     @Override
     public void validSpace(Space space, boolean add) {
         ThrowUtils.throwIf(space == null, ErrorCode.PARAMS_ERROR);
@@ -160,6 +161,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space> implements
 //        }
     }
 
+    // 获取空间封装VO 包含用户信息 用户使用的接口 获取空间详情 并缓存到本地缓存中
     @Override
     public SpaceVO getSpaceVO(Space space, HttpServletRequest request) {
         // 对象转封装类
@@ -174,6 +176,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space> implements
         return spaceVO;
     }
 
+    // 分页获取空间封装VO 包含用户信息 用户使用的接口 获取空间列表 并缓存到本地缓存中
     @Override
     public Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage, HttpServletRequest request) {
         List<Space> spaceList = spacePage.getRecords();
