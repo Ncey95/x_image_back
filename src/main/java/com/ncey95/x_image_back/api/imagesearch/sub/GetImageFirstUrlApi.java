@@ -24,7 +24,7 @@ public class GetImageFirstUrlApi {
 
 
             Elements scriptElements = document.getElementsByTag("script");
-
+            String firstUrl = "";
 
             for (Element script : scriptElements) {
                 String scriptContent = script.html();
@@ -33,15 +33,15 @@ public class GetImageFirstUrlApi {
                     Pattern pattern = Pattern.compile("\"firstUrl\"\\s*:\\s*\"(.*?)\"");
                     Matcher matcher = pattern.matcher(scriptContent);
                     if (matcher.find()) {
-                        String firstUrl = matcher.group(1);
+                        firstUrl = matcher.group(1);
 
                         firstUrl = firstUrl.replace("\\/", "/");
                         return firstUrl;
                     }
                 }
             }
-
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未找到 url");
+            return firstUrl;
+            //throw new BusinessException(ErrorCode.OPERATION_ERROR, "未找到 url");
         } catch (Exception e) {
             log.error("搜索失败", e);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "搜索失败");
@@ -54,4 +54,4 @@ public class GetImageFirstUrlApi {
         String imageFirstUrl = getImageFirstUrl(url);
         System.out.println("搜索成功，结果 URL：" + imageFirstUrl);
     }
-}
+}// 这里有问题 没有实现 没有找到url时返回空字符串
