@@ -2,6 +2,7 @@ package com.ncey95.x_image_back.model.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ncey95.x_image_back.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.ncey95.x_image_back.model.dto.picture.*;
 import com.ncey95.x_image_back.model.po.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -72,4 +73,7 @@ public interface IPictureService extends IService<Picture> {
 
     @Transactional(rollbackFor = Exception.class)
     void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
+
+    // 创建AI扩图出图任务
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
 }
