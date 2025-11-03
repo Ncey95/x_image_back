@@ -11,9 +11,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * @author
- * @description 针对表【space_user(空间用户关联)】的数据库操作Service
- * @createDate 2025-01-02 20:07:15
+ * <p>
+ * 空间用户关联 服务类
+ * </p>
+ *
+ * @author Ncey95
+ * @since 2025-11-03
  */
 public interface SpaceUserService extends IService<SpaceUser> {
 

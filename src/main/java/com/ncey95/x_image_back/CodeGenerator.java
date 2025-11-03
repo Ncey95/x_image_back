@@ -23,7 +23,7 @@ public class CodeGenerator {
                             .pathInfo(Collections.singletonMap(OutputFile.xml, System.getProperty("user.dir") + "/src/main/resources/generator/mapper")); // 设置mapperXml生成路径
                 })
                 .strategyConfig(builder -> {
-                    builder.addInclude("space") // 设置需要生成的表名 多个表名用逗号隔开
+                    builder.addInclude("space_user") // 设置需要生成的表名 多个表名用逗号隔开
                             .entityBuilder()
                             .enableLombok()
                             .enableTableFieldAnnotation() // 启用字段注解

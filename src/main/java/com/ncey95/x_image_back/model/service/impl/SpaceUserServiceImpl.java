@@ -4,18 +4,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ncey95.x_image_back.exception.BusinessException;
 import com.ncey95.x_image_back.exception.ErrorCode;
 import com.ncey95.x_image_back.exception.ThrowUtils;
 import com.ncey95.x_image_back.model.dto.spaceuser.SpaceUserAddRequest;
 import com.ncey95.x_image_back.model.dto.spaceuser.SpaceUserQueryRequest;
 import com.ncey95.x_image_back.model.enums.SpaceRoleEnum;
-import com.ncey95.x_image_back.model.mapper.SpaceUserMapper;
 import com.ncey95.x_image_back.model.po.Space;
 import com.ncey95.x_image_back.model.po.SpaceUser;
+import com.ncey95.x_image_back.model.mapper.SpaceUserMapper;
 import com.ncey95.x_image_back.model.po.User;
 import com.ncey95.x_image_back.model.service.ISpaceService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ncey95.x_image_back.model.service.SpaceUserService;
 import com.ncey95.x_image_back.model.service.UserService;
 import com.ncey95.x_image_back.model.vo.SpaceUserVO;
@@ -33,6 +33,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * <p>
+ * 空间用户关联 服务实现类
+ * </p>
+ *
+ * @author Ncey95
+ * @since 2025-11-03
+ */
+
 @Service
 public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser>
         implements SpaceUserService {
@@ -41,8 +50,9 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
     private UserService userService;
 
     @Resource
-    @Lazy
+    @Lazy // 避免循环依赖
     private ISpaceService spaceService;
+
 
     @Override
     public long addSpaceUser(SpaceUserAddRequest spaceUserAddRequest) {

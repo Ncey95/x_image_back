@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ncey95.x_image_back.constant.UserConstant;
 import com.ncey95.x_image_back.exception.BusinessException;
 import com.ncey95.x_image_back.exception.ErrorCode;
+import com.ncey95.x_image_back.manager.auth.StpKit;
 import com.ncey95.x_image_back.model.dto.user.UserQueryRequest;
 import com.ncey95.x_image_back.model.enums.UserRoleEnum;
 import com.ncey95.x_image_back.model.po.User;
@@ -105,6 +106,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         }
         request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);
+        // 记录用户登录状态到空间 StpLogic 中 ， 以便后续在空间中进行权限校验
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(UserConstant.USER_LOGIN_STATE, user);
         return this.getUserLoginVO(user);
     }
 

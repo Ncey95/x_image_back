@@ -68,6 +68,11 @@ public class PictureVO implements Serializable {
 
     private UserVO user;
 
+     // 权限列表
+    private List<String> permissionList;
+
+
+
     private static final long serialVersionUID = 1L;
 
     // 将PictureVO对象转换为Picture对象

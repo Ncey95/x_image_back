@@ -524,7 +524,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         // 仅本人和管理员可删除
         // 校验图片是否有操作权限
-        checkPictureAuth(loginUser, oldPicture);
+        // 以改为使用注解校验
+        //checkPictureAuth(loginUser, oldPicture);
         // 开启事务
         transactionTemplate.execute(status -> {
             // 操作数据库
@@ -562,8 +563,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         long id = pictureEditRequest.getId();
         Picture oldPicture = this.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-
-        checkPictureAuth(loginUser, oldPicture);
+        // 已改为使用注解校验权限
+        //checkPictureAuth(loginUser, oldPicture);
 
         this.fillReviewParams(picture, loginUser);
 
@@ -726,7 +727,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         Picture picture = Optional.ofNullable(this.getById(pictureId))
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ERROR));
         // 校验用户是否有操作该图片的权限
-        checkPictureAuth(loginUser, picture);
+        // 已改为使用注解校验权限
+        //checkPictureAuth(loginUser, picture);
         // 构造扩图任务 参数
         CreateOutPaintingTaskRequest taskRequest = new CreateOutPaintingTaskRequest();
         CreateOutPaintingTaskRequest.Input input = new CreateOutPaintingTaskRequest.Input();

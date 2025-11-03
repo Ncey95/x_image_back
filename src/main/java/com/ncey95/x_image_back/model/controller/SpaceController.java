@@ -8,6 +8,7 @@ import com.ncey95.x_image_back.constant.UserConstant;
 import com.ncey95.x_image_back.exception.BusinessException;
 import com.ncey95.x_image_back.exception.ErrorCode;
 import com.ncey95.x_image_back.exception.ThrowUtils;
+import com.ncey95.x_image_back.manager.auth.SpaceUserAuthManager;
 import com.ncey95.x_image_back.model.dto.DeleteRequest;
 import com.ncey95.x_image_back.model.dto.space.*;
 import com.ncey95.x_image_back.model.enums.SpaceLevelEnum;
@@ -46,8 +47,8 @@ public class SpaceController {
     @Resource
     private ISpaceService spaceService;
 
-//    @Resource
-//    private SpaceUserAuthManager spaceUserAuthManager;
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     @PostMapping("/add")
     public BaseResponse<Long> addSpace(@RequestBody SpaceAddRequest spaceAddRequest, HttpServletRequest request) {
@@ -132,8 +133,10 @@ public class SpaceController {
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
         User loginUser = userService.getLoginUser(request);
-//        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
-//        spaceVO.setPermissionList(permissionList);
+        // 获取权限列表
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
+
         // 获取封装类
         return ResultUtils.success(spaceVO);
     }
